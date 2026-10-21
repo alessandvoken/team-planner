@@ -14,6 +14,10 @@ export function Board() {
             </span>
           </div>
 
+          {WORK_ITEMS.filter((item) => item.state === state).length === 0 && (
+            <p>No work items</p>
+          )}
+
           <ul className="grid gap-3">
             {WORK_ITEMS.filter((item) => item.state === state).map((item) => (
               <li
