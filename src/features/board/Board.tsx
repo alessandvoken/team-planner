@@ -7,9 +7,13 @@ export function Board() {
     <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
       {WORK_ITEM_STATE.map((state) => (
         <section className="bg-slate-100 p-4" key={state}>
-          <h2 className="mb-3 font-semibold">
-            {WORK_ITEM_STATE_LABELS[state]}
-          </h2>
+          <div className="mb-3 flex justify-between">
+            <h2 className="font-semibold">{WORK_ITEM_STATE_LABELS[state]}</h2>
+            <span>
+              {WORK_ITEMS.filter((item) => item.state === state).length}
+            </span>
+          </div>
+
           <ul className="grid gap-3">
             {WORK_ITEMS.filter((item) => item.state === state).map((item) => (
               <li
