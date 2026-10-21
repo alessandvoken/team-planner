@@ -3,7 +3,7 @@ import { Board } from './features/board/Board';
 function App() {
   return (
     <main className="p-6">
-      <h1 className="text-2xl font-semibold mb-3">Sprint board</h1>
+      <h1 className="mb-3 text-2xl font-semibold">Sprint board</h1>
       <Board />
     </main>
   );
