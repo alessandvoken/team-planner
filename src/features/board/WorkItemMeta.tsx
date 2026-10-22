@@ -24,8 +24,14 @@ export function WorkItemPriority({ priority }: Pick<WorkItem, 'priority'>) {
   return (
     <Chip
       size="sm"
-      variant="soft"
-      color={priority === 'High' ? 'warning' : 'default'}
+      variant="tertiary"
+      color={
+        priority === 'High'
+          ? 'danger'
+          : priority === 'Medium'
+            ? 'warning'
+            : 'success'
+      }
     >
       <span className="sr-only">Priority: </span>
       <Chip.Label>{priority}</Chip.Label>

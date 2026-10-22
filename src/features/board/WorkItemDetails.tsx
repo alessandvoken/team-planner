@@ -1,6 +1,5 @@
 import {
   Button,
-  Card,
   Chip,
   Description,
   Label,
@@ -12,6 +11,7 @@ import { useState } from 'react';
 
 import { WORK_ITEM_STATE_LABELS } from './states';
 import type { WorkItem } from './types';
+import { WorkItemCard } from './WorkItemCard';
 import {
   WorkItemAssignee,
   WorkItemPriority,
@@ -32,21 +32,7 @@ export function WorkItemDetails({ item }: WorkItemDetailsProps) {
   return (
     <Modal>
       <Modal.Trigger className="w-full">
-        <Card className="ring-1 ring-transparent focus-within:ring-accent hover:ring-accent">
-          <Card.Header>
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <WorkItemTypeBadge kind={item.kind} />
-              <Card.Description className="text-xs">
-                #{item.id}
-              </Card.Description>
-            </div>
-            <Card.Title className="font-normal">{item.title}</Card.Title>
-          </Card.Header>
-          <Card.Footer className="flex-wrap justify-between gap-2 border-t border-separator pt-3 text-muted">
-            <WorkItemAssignee assignee={item.assignee} />
-            <WorkItemPriority priority={item.priority} />
-          </Card.Footer>
-        </Card>
+        <WorkItemCard item={item} />
       </Modal.Trigger>
       <Modal.Backdrop>
         <Modal.Container size="lg" scroll="inside" className="sm:w-full">

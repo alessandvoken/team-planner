@@ -44,3 +44,29 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .board-drop-indicator {
+    height: 0;
+    opacity: 0;
+    transition:
+      height 120ms ease-out,
+      opacity 120ms ease-out;
+
+    &[data-drop-target] {
+      @apply border border-dashed border-accent bg-accent-soft;
+      height: var(--board-drag-height);
+      border-radius: var(--board-drag-radius);
+      opacity: 1;
+
+      @starting-style {
+        height: 0;
+        opacity: 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+}
