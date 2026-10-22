@@ -120,7 +120,7 @@ export function WorkItemDetails({ item }: WorkItemDetailsProps) {
                               )}
                             </time>
                           </div>
-                          <p className="text-sm break-words whitespace-pre-wrap">
+                          <p className="bwrap-break-word text-sm whitespace-pre-wrap">
                             {comment.body}
                           </p>
                         </li>

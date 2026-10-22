@@ -42,9 +42,9 @@ export function ThemeSwitch() {
           <Switch.Thumb>
             <Switch.Icon>
               {isDark ? (
-                <Moon size={12} aria-hidden="true" />
+                <Moon size={14} aria-hidden="true" />
               ) : (
-                <Sun size={12} aria-hidden="true" />
+                <Sun size={14} aria-hidden="true" />
               )}
             </Switch.Icon>
           </Switch.Thumb>

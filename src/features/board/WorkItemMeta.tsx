@@ -48,7 +48,7 @@ export function WorkItemAssignee({ assignee }: Pick<WorkItem, 'assignee'>) {
           )}
         </Avatar.Fallback>
       </Avatar>
-      <span className="min-w-0 break-words">
+      <span className="min-w-0 wrap-break-word">
         {assignee?.name ?? 'Unassigned'}
       </span>
     </span>
