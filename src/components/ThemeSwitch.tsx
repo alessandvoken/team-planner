@@ -1,4 +1,5 @@
-import { Label, Switch } from '@heroui/react';
+import { Switch } from '@heroui/react';
+import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export function ThemeSwitch() {
@@ -35,12 +36,19 @@ export function ThemeSwitch() {
   }
 
   return (
-    <Switch isSelected={isDark} onChange={changeTheme}>
+    <Switch aria-label="Dark mode" isSelected={isDark} onChange={changeTheme}>
       <Switch.Content className="min-h-11">
         <Switch.Control>
-          <Switch.Thumb />
+          <Switch.Thumb>
+            <Switch.Icon>
+              {isDark ? (
+                <Moon size={12} aria-hidden="true" />
+              ) : (
+                <Sun size={12} aria-hidden="true" />
+              )}
+            </Switch.Icon>
+          </Switch.Thumb>
         </Switch.Control>
-        <Label>Dark mode</Label>
       </Switch.Content>
     </Switch>
   );
