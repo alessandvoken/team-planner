@@ -1,9 +1,14 @@
+import { ThemeSwitch } from './components/ThemeSwitch';
 import { Board } from './features/board/Board';
 
 function App() {
   return (
-    <main className="min-h-screen bg-page p-6 text-foreground">
-      <h1 className="mb-3 text-2xl font-medium">Sprint board</h1>
+    <main className="min-h-screen p-6">
+      <header className="mb-3 flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-2xl font-medium">Sprint board</h1>
+        <ThemeSwitch />
+      </header>
+
       <Board />
     </main>
   );

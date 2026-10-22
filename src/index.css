@@ -1,30 +1,46 @@
 @import 'tailwindcss';
+@import '@heroui/styles';
 
 @theme {
   --font-sans: 'Manrope Variable', sans-serif;
-  --color-page: #f6f6f4;
-  --color-column: #eaece9;
-  --color-card: #ffffff;
-  --color-foreground: #282b30;
-  --color-muted: #60656c;
-  --color-border: #d5d9d6;
-  --color-accent: #284f83;
-  --color-selected: #e1e7ef;
 }
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
+  --background: #f6f6f4;
+  --surface: #ffffff;
+  --surface-secondary: #eaece9;
+  --foreground: #282b30;
+  --muted: #60656c;
+  --border: #d5d9d6;
+  --accent: #284f83;
+  --accent-foreground: #ffffff;
+  --accent-soft: #e1e7ef;
+  --radius: 0.25rem;
+
+  --overlay: var(--surface);
+  --default: var(--border);
+  --default-foreground: var(--foreground);
+  --field-background: var(--surface);
+  --field-foreground: var(--foreground);
+  --separator: var(--border);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-page: #242628;
-    --color-column: #2e3133;
-    --color-card: #393d40;
-    --color-foreground: #eceeed;
-    --color-muted: #b8bebb;
-    --color-border: #535b58;
-    --color-accent: #a6c7ee;
-    --color-selected: #34475e;
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --background: #242628;
+  --surface: #393d40;
+  --surface-secondary: #2e3133;
+  --foreground: #eceeed;
+  --muted: #b8bebb;
+  --border: #535b58;
+  --accent: #a6c7ee;
+  --accent-foreground: #242628;
+  --accent-soft: #34475e;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground;
   }
 }

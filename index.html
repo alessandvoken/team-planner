@@ -5,6 +5,22 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Team Planner</title>
+    <script>
+      const root = document.documentElement;
+      let savedTheme;
+      try {
+        savedTheme = localStorage.getItem('team-planner-theme');
+      } catch {
+        // Use the system preference when browser storage is unavailable.
+      }
+      const hasPreference = savedTheme === 'light' || savedTheme === 'dark';
+      root.dataset.theme = hasPreference
+        ? savedTheme
+        : window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light';
+      root.dataset.themePreference = hasPreference ? 'manual' : 'system';
+    </script>
   </head>
   <body>
     <div id="root"></div>

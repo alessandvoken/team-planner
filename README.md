@@ -4,7 +4,7 @@ A sprint board and backlog in the family of Azure Boards. I'm using it to work o
 
 Live demo: <https://team-planner-delta.vercel.app>
 
-This is a work in progress. The demo shows only a page title for now, and the sprint board is the first thing I'm building. So far it uses React 19, TypeScript, Vite and Tailwind CSS.
+This is a work in progress. The board shows sample work items grouped by state, with counts and empty states. Drag and drop, the backlog and real-time updates are still to come. It uses React 19, TypeScript, Vite and HeroUI, with Tailwind CSS for layout.
 
 ## Running it locally
 
@@ -16,6 +16,7 @@ pnpm dev
 ```
 
 The checks are `pnpm lint`, `pnpm format:check` and `pnpm build`.
+Run `node --test tests/theme.test.mjs` to check initial theme selection, including blocked browser storage.
 
 ## Credits
 
