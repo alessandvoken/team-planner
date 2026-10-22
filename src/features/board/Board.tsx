@@ -1,8 +1,7 @@
-import { Card } from '@heroui/react';
-
 import { WORK_ITEMS } from './data';
 import { WORK_ITEM_STATE_LABELS } from './states';
 import { WORK_ITEM_STATE } from './types';
+import { WorkItemDetails } from './WorkItemDetails';
 
 export function Board() {
   return (
@@ -29,16 +28,7 @@ export function Board() {
               <ul className="grid gap-3">
                 {items.map((item) => (
                   <li key={item.id}>
-                    <Card>
-                      <Card.Header>
-                        <Card.Description className="text-xs">
-                          #{item.id}
-                        </Card.Description>
-                        <Card.Title className="font-normal">
-                          {item.title}
-                        </Card.Title>
-                      </Card.Header>
-                    </Card>
+                    <WorkItemDetails item={item} />
                   </li>
                 ))}
               </ul>
