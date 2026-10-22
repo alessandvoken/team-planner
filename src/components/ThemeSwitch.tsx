@@ -36,7 +36,12 @@ export function ThemeSwitch() {
   }
 
   return (
-    <Switch aria-label="Dark mode" isSelected={isDark} onChange={changeTheme}>
+    <Switch
+      size="lg"
+      aria-label="Dark mode"
+      isSelected={isDark}
+      onChange={changeTheme}
+    >
       <Switch.Content className="min-h-11">
         <Switch.Control>
           <Switch.Thumb>

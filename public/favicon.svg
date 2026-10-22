@@ -1,17 +1,26 @@
 <svg
   xmlns="http://www.w3.org/2000/svg"
-  width="24"
-  height="24"
-  viewBox="0 0 24 24"
+  width="32"
+  height="32"
+  viewBox="0 0 32 32"
   fill="none"
-  stroke="#2563eb"
   stroke-width="2"
   stroke-linecap="round"
   stroke-linejoin="round"
 >
-  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+  <style>
+    rect { fill: #284f83; }
+    g { stroke: #ffffff; }
+    @media (prefers-color-scheme: dark) {
+      rect { fill: #a6c7ee; }
+      g { stroke: #242628; }
+    }
+  </style>
+  <rect width="32" height="32" rx="7" stroke="none" />
+  <g transform="translate(4 4)">
   <path d="M4 4l6 0" />
   <path d="M14 4l6 0" />
   <path d="M4 10a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2l0 -8" />
   <path d="M14 10a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2l0 -2" />
+  </g>
 </svg>
