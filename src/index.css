@@ -46,6 +46,39 @@
 }
 
 @layer components {
+  /* Clip both the preview and React Aria's setDragImage wrapper for WebKit. */
+  .work-item-drag-preview,
+  div:has(> .work-item-drag-preview) {
+    border-radius: min(32px, var(--radius-3xl));
+    clip-path: inset(0 round min(32px, var(--radius-3xl)));
+  }
+
+  @media (hover: none) {
+    .work-item-drag-source:active:not(:focus-visible) {
+      clip-path: inset(0 round min(32px, var(--radius-3xl)));
+    }
+  }
+
+  .button.work-item-title {
+    @apply h-auto rounded-sm p-0 text-left font-normal whitespace-normal;
+    display: inline;
+    background: transparent;
+    transform: none;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 0.2em;
+    transition: text-decoration-color 120ms ease-out;
+
+    &:hover,
+    &[data-focus-visible='true'] {
+      text-decoration-color: currentColor;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+
   .board-drop-indicator {
     height: 0;
     opacity: 0;

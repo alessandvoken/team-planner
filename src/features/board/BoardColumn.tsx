@@ -53,7 +53,7 @@ export function BoardColumn({ state, items, onMove }: BoardColumnProps) {
 
       return (
         <div
-          className="relative"
+          className="work-item-drag-preview relative"
           style={{ width: listRef.current?.getBoundingClientRect().width }}
         >
           <WorkItemCard item={item} />
@@ -139,7 +139,7 @@ export function BoardColumn({ state, items, onMove }: BoardColumnProps) {
           <GridListItem
             id={item.id}
             textValue={item.title}
-            className="relative cursor-grab rounded-[min(32px,var(--radius-3xl))] outline-offset-2 outline-accent no-highlight focus-visible:outline-2 data-[dragging]:cursor-grabbing data-[dragging]:opacity-0"
+            className="work-item-drag-source relative cursor-grab rounded-[min(32px,var(--radius-3xl))] outline-offset-2 outline-accent no-highlight focus-visible:outline-2 data-[dragging]:cursor-grabbing data-[dragging]:opacity-0"
           >
             <WorkItemDetails item={item} />
             <Button

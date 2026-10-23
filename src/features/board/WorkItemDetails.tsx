@@ -31,9 +31,14 @@ export function WorkItemDetails({ item }: WorkItemDetailsProps) {
 
   return (
     <Modal>
-      <Modal.Trigger className="w-full rounded-[min(32px,var(--radius-3xl))] no-highlight">
-        <WorkItemCard item={item} />
-      </Modal.Trigger>
+      <WorkItemCard
+        item={item}
+        title={
+          <Button variant="ghost" className="work-item-title">
+            {item.title}
+          </Button>
+        }
+      />
       <Modal.Backdrop>
         <Modal.Container size="lg" scroll="inside" className="sm:w-full">
           <Modal.Dialog className="max-w-6xl sm:h-[85dvh]">
