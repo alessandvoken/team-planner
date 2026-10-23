@@ -31,7 +31,7 @@ export function WorkItemDetails({ item }: WorkItemDetailsProps) {
 
   return (
     <Modal>
-      <Modal.Trigger className="w-full">
+      <Modal.Trigger className="w-full rounded-[min(32px,var(--radius-3xl))] no-highlight">
         <WorkItemCard item={item} />
       </Modal.Trigger>
       <Modal.Backdrop>
