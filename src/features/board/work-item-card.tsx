@@ -6,7 +6,7 @@ import {
   WorkItemAssignee,
   WorkItemPriority,
   WorkItemTypeBadge,
-} from './WorkItemMeta';
+} from './work-item-meta';
 
 export function WorkItemCard({
   item,

@@ -8,7 +8,7 @@
   "sortPackageJson": false,
   "sortImports": true,
   "sortTailwindcss": {
-    "stylesheet": "./src/index.css"
+    "stylesheet": "./src/app/globals.css"
   },
-  "ignorePatterns": ["dist", "pnpm-lock.yaml"]
+  "ignorePatterns": ["dist", ".next", "next-env.d.ts", "pnpm-lock.yaml"]
 }

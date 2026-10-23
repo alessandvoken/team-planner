@@ -11,19 +11,19 @@ import { useState } from 'react';
 
 import { WORK_ITEM_STATE_LABELS } from './states';
 import type { WorkItem } from './types';
-import { WorkItemCard } from './WorkItemCard';
+import { WorkItemCard } from './work-item-card';
 import {
   WorkItemAssignee,
   WorkItemPriority,
   WorkItemTypeBadge,
-} from './WorkItemMeta';
+} from './work-item-meta';
 
 type WorkItemDetailsProps = {
   item: WorkItem;
 };
 
 export function WorkItemDetails({ item }: WorkItemDetailsProps) {
-  // ponytail: local comments reset on reload/remount; move to Query with the API.
+  // ponytail: local comments reset on reload/remount; persist with the future API.
   const [comments, setComments] = useState<
     { id: string; body: string; createdAt: string }[]
   >([]);

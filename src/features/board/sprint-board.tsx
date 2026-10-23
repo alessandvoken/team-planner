@@ -1,7 +1,8 @@
+'use client';
+
 import { useListData } from 'react-aria-components';
 
-import { BoardColumn } from './BoardColumn';
-import { WORK_ITEMS } from './data';
+import { BoardColumn } from './board-column';
 import {
   WORK_ITEM_STATE,
   type WorkItemState,
@@ -9,8 +10,8 @@ import {
   type WorkItem,
 } from './types';
 
-export function Board() {
-  const list = useListData<WorkItem>({ initialItems: WORK_ITEMS });
+export function SprintBoard({ initialItems }: { initialItems: WorkItem[] }) {
+  const list = useListData<WorkItem>({ initialItems });
 
   function moveWorkItem(
     id: string,

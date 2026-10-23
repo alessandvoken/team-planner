@@ -1,6 +1,6 @@
 import type { WorkItem } from './types';
 
-export const WORK_ITEMS: WorkItem[] = [
+export const MOCK_WORK_ITEMS: WorkItem[] = [
   {
     id: '1',
     title: 'Add sprint date filters',

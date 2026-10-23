@@ -1,10 +1,8 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { runInNewContext } from 'node:vm';
 
-const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-const bootstrap = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+import { themeBootstrap } from '../src/components/theme/theme-bootstrap.ts';
 
 test('theme before first paint respects saved choice, system and blocked storage', () => {
   for (const [saved, systemDark, expected, preference] of [
@@ -16,7 +14,7 @@ test('theme before first paint respects saved choice, system and blocked storage
     [new Error('Storage blocked'), true, 'dark', 'system'],
   ]) {
     const dataset = {};
-    runInNewContext(bootstrap, {
+    runInNewContext(themeBootstrap, {
       document: { documentElement: { dataset } },
       localStorage: {
         getItem(key) {

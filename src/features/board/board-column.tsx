@@ -11,8 +11,8 @@ import {
 
 import { WORK_ITEM_STATE_LABELS } from './states';
 import type { WorkItem, WorkItemInsertion, WorkItemState } from './types';
-import { WorkItemCard } from './WorkItemCard';
-import { WorkItemDetails } from './WorkItemDetails';
+import { WorkItemCard } from './work-item-card';
+import { WorkItemDetails } from './work-item-details';
 
 type BoardColumnProps = {
   state: WorkItemState;

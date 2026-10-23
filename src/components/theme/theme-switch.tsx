@@ -1,32 +1,38 @@
+'use client';
+
 import { Switch } from '@heroui/react';
 import { Moon, Sun } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
+
+function subscribe(onChange: () => void) {
+  const root = document.documentElement;
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+  const followSystem = (event: MediaQueryListEvent) => {
+    if (root.dataset.themePreference === 'system') {
+      root.dataset.theme = event.matches ? 'dark' : 'light';
+    }
+  };
+  const observer = new MutationObserver(onChange);
+  observer.observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+  media.addEventListener('change', followSystem);
+
+  return () => {
+    observer.disconnect();
+    media.removeEventListener('change', followSystem);
+  };
+}
 
 export function ThemeSwitch() {
-  const [isDark, setIsDark] = useState(
+  const isDark = useSyncExternalStore(
+    subscribe,
     () => document.documentElement.dataset.theme === 'dark',
+    () => false,
   );
-
-  useEffect(() => {
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const followSystem = (event: MediaQueryListEvent) => {
-      if (document.documentElement.dataset.themePreference === 'system') {
-        document.documentElement.dataset.theme = event.matches
-          ? 'dark'
-          : 'light';
-        setIsDark(event.matches);
-      }
-    };
-
-    media.addEventListener('change', followSystem);
-    return () => media.removeEventListener('change', followSystem);
-  }, []);
 
   function changeTheme(selected: boolean) {
     const theme = selected ? 'dark' : 'light';
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.themePreference = 'manual';
-    setIsDark(selected);
 
     try {
       localStorage.setItem('team-planner-theme', theme);
