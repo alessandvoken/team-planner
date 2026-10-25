@@ -22,7 +22,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
       </head>
-      <body>
+      <body className="antialiased">
         <div className="flex min-h-dvh flex-col p-6">
           <SiteHeader />
           <main className="flex flex-1 flex-col">{children}</main>
