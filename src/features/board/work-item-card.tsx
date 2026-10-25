@@ -18,7 +18,7 @@ export function WorkItemCard({
   return (
     <Card className="ring-1 ring-transparent focus-within:ring-accent hover:ring-accent">
       <Card.Header>
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2 pr-8">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <WorkItemTypeBadge kind={item.kind} />
           <Card.Description className="text-xs">#{item.id}</Card.Description>
         </div>

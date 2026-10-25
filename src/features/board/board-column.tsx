@@ -1,107 +1,18 @@
 import { Button } from '@heroui/react';
-import { GripVertical } from 'lucide-react';
-import { useRef } from 'react';
-import {
-  GridList,
-  GridListItem,
-  DropIndicator,
-  useDragAndDrop,
-  isTextDropItem,
-} from 'react-aria-components';
+import { GridList, GridListItem } from 'react-aria-components';
 
 import { WORK_ITEM_STATE_LABELS } from './states';
-import type { WorkItem, WorkItemInsertion, WorkItemState } from './types';
-import { WorkItemCard } from './work-item-card';
+import {
+  useCardDragAndDrop,
+  type CardDragAndDropOptions,
+} from './use-card-drag-and-drop';
 import { WorkItemDetails } from './work-item-details';
 
-type BoardColumnProps = {
-  state: WorkItemState;
-  items: WorkItem[];
-  onMove: (
-    id: string,
-    destination: WorkItemState,
-    insertion?: WorkItemInsertion,
-  ) => void;
-};
-
-export function BoardColumn({ state, items, onMove }: BoardColumnProps) {
-  const listRef = useRef<HTMLDivElement>(null);
-  const { dragAndDropHooks } = useDragAndDrop<WorkItem>({
-    onDragStart: (event) => {
-      const key = [...event.keys][0];
-      const card = listRef.current?.querySelector<HTMLElement>(
-        `[data-key="${CSS.escape(String(key))}"] [data-slot="card"]`,
-      );
-      const board = listRef.current?.closest<HTMLElement>('[data-board]');
-      if (!card || !board) return;
-
-      board.style.setProperty('--board-drag-height', `${card.offsetHeight}px`);
-      board.style.setProperty(
-        '--board-drag-radius',
-        getComputedStyle(card).borderRadius,
-      );
-    },
-    getItems(_keys, draggedItems) {
-      return draggedItems.map((item) => ({
-        'application/x-work-item': item.id,
-        'text/plain': item.title,
-      }));
-    },
-    renderDragPreview: (draggedItems) => {
-      const id = draggedItems[0]['application/x-work-item'];
-      const item = items.find((item) => item.id === id)!;
-
-      return (
-        <div
-          className="work-item-drag-preview relative"
-          style={{ width: listRef.current?.getBoundingClientRect().width }}
-        >
-          <WorkItemCard item={item} />
-          <span
-            className="absolute top-2 right-2 flex size-8 items-center justify-center"
-            aria-hidden="true"
-          >
-            <GripVertical size={16} />
-          </span>
-        </div>
-      );
-    },
-    acceptedDragTypes: ['application/x-work-item'],
-    getAllowedDropOperations: () => ['move'],
-    getDropOperation: () => 'move',
-    onInsert: async (event) => {
-      const position = event.target.dropPosition;
-      if (position === 'on') return;
-      for (const droppedItem of event.items.filter(isTextDropItem)) {
-        if (!droppedItem.types.has('application/x-work-item')) continue;
-        const id = await droppedItem.getText('application/x-work-item');
-        onMove(id, state, {
-          targetId: String(event.target.key),
-          position,
-        });
-      }
-    },
-    onReorder: (event) => {
-      const position = event.target.dropPosition;
-      if (position === 'on') return;
-      for (const key of event.keys) {
-        onMove(String(key), state, {
-          targetId: String(event.target.key),
-          position,
-        });
-      }
-    },
-    renderDropIndicator: (target) => (
-      <DropIndicator target={target} className="board-drop-indicator" />
-    ),
-    onRootDrop: async (event) => {
-      const droppedItems = event.items.filter(isTextDropItem);
-      for (const droppedItem of droppedItems) {
-        if (!droppedItem.types.has('application/x-work-item')) continue;
-        const id = await droppedItem.getText('application/x-work-item');
-        onMove(id, state);
-      }
-    },
+export function BoardColumn({ state, items, onMove }: CardDragAndDropOptions) {
+  const { listRef, dragAndDropHooks } = useCardDragAndDrop({
+    state,
+    items,
+    onMove,
   });
 
   return (
@@ -144,13 +55,12 @@ export function BoardColumn({ state, items, onMove }: BoardColumnProps) {
             <WorkItemDetails item={item} />
             <Button
               slot="drag"
-              isIconOnly
               size="sm"
-              variant="ghost"
+              variant="secondary"
               aria-label={`Move #${item.id}: ${item.title}`}
-              className="absolute top-2 right-2 cursor-grab active:cursor-grabbing"
+              className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:right-2 focus:z-10"
             >
-              <GripVertical size={16} aria-hidden="true" />
+              Move card
             </Button>
           </GridListItem>
         )}

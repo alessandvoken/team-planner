@@ -9,7 +9,7 @@ Live demo: <https://team-planner-delta.vercel.app>
 This is a work in progress. The current app includes:
 
 - A sprint board with New, Active, Resolved and Closed columns.
-- Drag and drop to move and reorder sample work items, including keyboard interactions through React Aria.
+- Drag and drop from the whole card to move and reorder sample work items. Keyboard and screen reader users can use a Move card button that becomes visible on focus, powered by React Aria.
 - Cards showing type, priority and assignee, with a modal for descriptions and local comments.
 - Light and dark themes, following the system preference until a manual choice is saved.
 
