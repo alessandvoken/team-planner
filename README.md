@@ -41,7 +41,11 @@ pnpm build
 pnpm start
 ```
 
-No environment variables or external services are required. `vercel.json` selects the Next.js preset and resets the old output-directory override for deployment.
+Copy `.env.example` to `.env.local` and fill in the Supabase Project URL and publishable key from the project's Connect dialog. `.env.local` is ignored by Git. Set the same two variables in Vercel before deploying. The database password and secret key are not used by these clients.
+
+Supabase browser and server clients live in `src/lib/supabase/` and use `@supabase/supabase-js` without Auth sessions or cookies. The board still uses sample data until the database schema and policies are connected.
+
+`vercel.json` selects the Next.js preset and resets the old output-directory override for deployment.
 
 ## Deploying on Vercel
 

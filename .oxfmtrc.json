@@ -10,5 +10,11 @@
   "sortTailwindcss": {
     "stylesheet": "./src/app/globals.css"
   },
-  "ignorePatterns": ["dist", ".next", "next-env.d.ts", "pnpm-lock.yaml"]
+  "ignorePatterns": [
+    "dist",
+    ".next",
+    ".agents",
+    "next-env.d.ts",
+    "pnpm-lock.yaml"
+  ]
 }
