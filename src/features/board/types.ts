@@ -1,4 +1,10 @@
-export const WORK_ITEM_STATE = ['new', 'active', 'resolved', 'closed'] as const;
+export const WORK_ITEM_STATE = [
+  'new',
+  'active',
+  'blocked',
+  'resolved',
+  'closed',
+] as const;
 
 export type WorkItemState = (typeof WORK_ITEM_STATE)[number];
 export type WorkItemKind = 'bug' | 'story' | 'task';

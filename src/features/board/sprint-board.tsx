@@ -40,7 +40,10 @@ export function SprintBoard({ initialItems }: { initialItems: WorkItem[] }) {
   }
 
   return (
-    <div data-board className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-4">
+    <div
+      data-board
+      className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5"
+    >
       {WORK_ITEM_STATE.map((state) => {
         const items = list.items.filter((item) => item.state === state);
 

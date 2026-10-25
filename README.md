@@ -6,7 +6,7 @@ Live demo: <https://team-planner-delta.vercel.app>
 
 ## Features
 
-- A sprint board with New, Active, Resolved and Closed columns.
+- A sprint board with New, Active, Blocked, Resolved and Closed columns.
 - Work items loaded from Postgres, with drag and drop to move and reorder cards using a pointer or keyboard.
 - Type, priority and assignee on cards; descriptions and local comments in a detail modal.
 - Light and dark themes, with a saved manual preference.
