@@ -41,9 +41,9 @@ pnpm build
 pnpm start
 ```
 
-Copy `.env.example` to `.env.local` and fill in the Supabase Project URL and publishable key from the project's Connect dialog. `.env.local` is ignored by Git. Set the same two variables in Vercel before deploying. The database password and secret key are not used by these clients.
+Copy `.env.example` to `.env.local`. Set `DATABASE_URL` to the URI from **Connect → Direct → Transaction pooler**, replacing the password placeholder with your percent-encoded database password. This variable is server-only. Set the Supabase Project URL and publishable key from the Connect dialog too, for the browser's future Realtime subscriptions. `.env.local` is ignored by Git; configure the same variables in Vercel before deploying.
 
-Supabase browser and server clients live in `src/lib/supabase/` and use `@supabase/supabase-js` without Auth sessions or cookies. The board still uses sample data until the database schema and policies are connected.
+`src/lib/db.ts` uses `pg` to run SQL from Next.js server code through the transaction pooler, with verified TLS and a one-connection pool per module instance. The public [Supabase root CA certificate](https://supabase-downloads.s3-ap-southeast-1.amazonaws.com/prod/ssl/prod-ca-2021.crt) is bundled in `src/lib/supabase/prod-ca-2021.crt`. Keep SSL options out of `DATABASE_URL`; the client configures them. Use parameterized queries without a statement `name` (named prepared statements are incompatible with this pooler mode). `src/lib/supabase/client.ts` is reserved for browser-side Realtime; it does not handle database writes. The board still uses sample data until the schema and queries are connected.
 
 `vercel.json` selects the Next.js preset and resets the old output-directory override for deployment.
 
@@ -66,9 +66,10 @@ pnpm lint
 pnpm format:check
 pnpm build
 pnpm test
+pnpm db:check
 ```
 
-The theme test checks the actual pre-hydration bootstrap, including invalid preferences and blocked browser storage. Lint runs separately from the Next.js build. Browser smoke checks during migration covered theme hydration, pointer and keyboard drag and drop, modal focus, comments and mobile layout in Chrome and WebKit; these are not part of `pnpm test`.
+The theme test checks the actual pre-hydration bootstrap, including invalid preferences and blocked browser storage. `pnpm db:check` requires `.env.local` and runs a read-only parameterized query against Postgres, checking that TLS is encrypted and verified. Lint runs separately from the Next.js build. Browser smoke checks during migration covered theme hydration, pointer and keyboard drag and drop, modal focus, comments and mobile layout in Chrome and WebKit; these are not part of `pnpm test`.
 
 ## Credits
 
