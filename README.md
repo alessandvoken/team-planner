@@ -47,6 +47,14 @@ Copy `.env.example` to `.env.local`. Set `DATABASE_URL` to the URI from **Connec
 
 `vercel.json` selects the Next.js preset and resets the old output-directory override for deployment.
 
+## Database schema
+
+The initial migration in `supabase/migrations/` defines teammates, work items and comments. `supabase/seed.sql` contains eight sample cards and three teammates: Nora Lind, Emil Berg and Alessandro Perchiazzi. The first four cards match the current frontend mocks. Work items have a zero-based `position` unique within their state, plus a `version` for later conflict checks. The position constraint can be deferred within a move transaction; the server must increment the version and update `updated_at` when mutations are implemented.
+
+RLS is enabled and the Data API roles have no table or sequence permissions. There are no browser read policies yet. SQL currently connects as `postgres`; a restricted application role must be configured before exposing server mutations. Realtime permissions and publication setup enter with subscriptions.
+
+Run `pnpm db:schema:check` against an empty development database to validate the migration and seed in a transaction that is always rolled back. It refuses to run if board tables already exist. Migration and seed application is a separate step; they are not run during deployment.
+
 ## Deploying on Vercel
 
 Use the existing Vercel project and Git deployment flow. `vercel.json` overrides the framework preset with Next.js, sets the build command to `pnpm build` and resets the output directory to the framework default. These settings do not need to be changed manually in the dashboard.
