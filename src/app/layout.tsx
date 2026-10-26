@@ -1,11 +1,10 @@
 import '@fontsource-variable/manrope';
+import { ToastProvider } from '@heroui/react';
 import type { Metadata } from 'next';
 
 import { SiteFooter } from '@/components/layout/footer';
 import { SiteHeader } from '@/components/layout/header';
 import { themeBootstrap } from '@/components/theme/theme-bootstrap';
-
-import { ToastProvider } from '@heroui/react';
 
 import './globals.css';
 
