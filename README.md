@@ -17,6 +17,10 @@ Work in progress: moves are not yet saved, so reloading restores the database st
 
 Next.js 16 App Router, React 19, TypeScript, HeroUI 3, React Aria Components and Tailwind CSS 4. Server-side SQL uses `pg` with Supabase-hosted Postgres.
 
+## Design
+
+Start new components and interactions from [DESIGN.md](./DESIGN.md), which defines the palette, typography, layout and interaction rules using the [Google Labs format](https://github.com/google-labs-code/design.md). Review design changes together and validate the document with `pnpm design:lint`.
+
 ## Running it locally
 
 Use Node 22.18+ in the Node 22 release line and pnpm 11.
@@ -44,6 +48,7 @@ pnpm start
 
 ```sh
 pnpm lint
+pnpm design:lint
 pnpm format:check
 pnpm build
 pnpm test
