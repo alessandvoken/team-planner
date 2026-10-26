@@ -1,6 +1,13 @@
 'use client';
 
-import { Button, Description, Modal, TextArea, TextField } from '@heroui/react';
+import {
+  Button,
+  Description,
+  Modal,
+  TextArea,
+  TextField,
+  toast,
+} from '@heroui/react';
 import { useState } from 'react';
 import { useListData } from 'react-aria-components';
 
@@ -102,6 +109,7 @@ export function SprintBoard({ initialItems }: { initialItems: WorkItem[] }) {
       pendingMove.insertion,
     );
     addComment(pendingMove.id, reason);
+    toast.success(`#${pendingMove.id} moved to Blocked`);
     setPendingMove(null);
   }
 
@@ -132,7 +140,10 @@ export function SprintBoard({ initialItems }: { initialItems: WorkItem[] }) {
         isDismissable={false}
         isOpen={pendingMove !== null}
         onOpenChange={(isOpen) => {
-          if (!isOpen) setPendingMove(null);
+          if (!isOpen && pendingMove) {
+            toast.warning('Issues in Blocked require an additional comment.');
+            setPendingMove(null);
+          }
         }}
       >
         <Modal.Container size="sm" scroll="inside">
