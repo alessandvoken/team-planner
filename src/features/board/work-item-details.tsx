@@ -7,10 +7,9 @@ import {
   TextArea,
   TextField,
 } from '@heroui/react';
-import { useState } from 'react';
 
 import { WORK_ITEM_STATE_LABELS } from './states';
-import type { WorkItem } from './types';
+import type { WorkItem, WorkItemComment } from './types';
 import { WorkItemCard } from './work-item-card';
 import {
   WorkItemAssignee,
@@ -20,15 +19,19 @@ import {
 
 type WorkItemDetailsProps = {
   item: WorkItem;
+  comments: WorkItemComment[];
+  draft: string;
+  onAddComment: (itemId: string, body: string) => void;
+  onDraftChange: (itemId: string, value: string) => void;
 };
 
-export function WorkItemDetails({ item }: WorkItemDetailsProps) {
-  // ponytail: local comments reset on reload/remount; persist with the future API.
-  const [comments, setComments] = useState<
-    { id: string; body: string; createdAt: string }[]
-  >([]);
-  const [draft, setDraft] = useState('');
-
+export function WorkItemDetails({
+  item,
+  comments,
+  draft,
+  onAddComment,
+  onDraftChange,
+}: WorkItemDetailsProps) {
   return (
     <Modal>
       <WorkItemCard
@@ -50,11 +53,11 @@ export function WorkItemDetails({ item }: WorkItemDetailsProps) {
               </div>
               <Modal.Heading>{item.title}</Modal.Heading>
             </Modal.Header>
-            <Modal.Body>
+            <Modal.Body className="mt-6 text-foreground">
               <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_15rem]">
                 <section className="min-w-0">
                   <h3 className="mb-3 font-medium">Description</h3>
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
                     {item.description}
                   </p>
                 </section>
@@ -85,19 +88,21 @@ export function WorkItemDetails({ item }: WorkItemDetailsProps) {
                   </dl>
                 </section>
 
-                <section className="min-w-0 border-t border-separator pt-6">
-                  <h3 className="mb-4 font-medium">Comments</h3>
+                <section className="flex min-w-0 flex-col gap-5 border-t border-separator pt-6">
+                  <h3 className="font-medium">Comments</h3>
                   {comments.length === 0 ? (
-                    <p className="mb-4 text-sm text-muted">No comments yet.</p>
+                    <p className="text-sm text-muted">No comments yet.</p>
                   ) : (
-                    <ol className="mb-5 space-y-4">
+                    <ol className="space-y-4">
                       {comments.map((comment) => (
                         <li
                           key={comment.id}
                           className="rounded-lg bg-surface-secondary p-3"
                         >
                           <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs">
-                            <span className="font-medium">You</span>
+                            <span className="font-medium">
+                              {comment.author.name}
+                            </span>
                             <time
                               dateTime={comment.createdAt}
                               className="text-muted"
@@ -111,7 +116,7 @@ export function WorkItemDetails({ item }: WorkItemDetailsProps) {
                               )}
                             </time>
                           </div>
-                          <p className="bwrap-break-word text-sm whitespace-pre-wrap">
+                          <p className="text-sm wrap-break-word whitespace-pre-wrap">
                             {comment.body}
                           </p>
                         </li>
@@ -119,28 +124,26 @@ export function WorkItemDetails({ item }: WorkItemDetailsProps) {
                     </ol>
                   )}
                   <form
-                    className="space-y-3"
+                    className="space-y-4 border-t border-separator pt-5"
                     onSubmit={(event) => {
                       event.preventDefault();
                       const body = draft.trim();
-                      if (!body) return;
-                      setComments((previous) => [
-                        ...previous,
-                        {
-                          id: crypto.randomUUID(),
-                          body,
-                          createdAt: new Date().toISOString(),
-                        },
-                      ]);
-                      setDraft('');
+                      if (!body || body.length > 2000) return;
+                      onAddComment(item.id, body);
+                      onDraftChange(item.id, '');
                     }}
                   >
-                    <TextField value={draft} onChange={setDraft}>
+                    <TextField
+                      value={draft}
+                      onChange={(value) => onDraftChange(item.id, value)}
+                      className="gap-2"
+                    >
                       <Label>Comment</Label>
                       <TextArea
                         rows={3}
                         maxLength={2000}
                         placeholder="Add context or share an update…"
+                        className="border border-border bg-surface-secondary"
                       />
                       <Description>
                         Comments stay in this tab until reload.

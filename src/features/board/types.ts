@@ -23,3 +23,10 @@ export type WorkItem = {
   priority: 'Low' | 'Medium' | 'High';
   assignee: { id: string; name: string } | null;
 };
+
+export type WorkItemComment = {
+  id: string;
+  author: { id: string; name: string };
+  body: string;
+  createdAt: string;
+};

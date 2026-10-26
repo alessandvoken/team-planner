@@ -9,17 +9,14 @@ Live demo: <https://team-planner-delta.vercel.app>
 - A sprint board with New, Active, Blocked, Resolved and Closed columns.
 - Work items loaded from Postgres, with drag and drop to move and reorder cards using a pointer or keyboard.
 - Type, priority and assignee on cards; descriptions and local comments in a detail modal.
+- Moving into Blocked requires a reason, which is added to the item's comments on confirmation.
 - Light and dark themes, with a saved manual preference.
 
-Work in progress: moves are not yet saved, so reloading restores the database state. Comments are local and also reset when a card moves between columns. Backlog and real-time collaboration are not implemented yet.
+Work in progress: moves, comments and comment drafts are local to the current page. They survive moves between columns but reset on reload, which restores the database state. Comments are attributed to Guest; no login is required. Backlog and real-time collaboration are not implemented yet.
 
 ## Stack
 
 Next.js 16 App Router, React 19, TypeScript, HeroUI 3, React Aria Components and Tailwind CSS 4. Server-side SQL uses `pg` with Supabase-hosted Postgres.
-
-## Design
-
-Start new components and interactions from [DESIGN.md](./DESIGN.md), which defines the palette, typography, layout and interaction rules using the [Google Labs format](https://github.com/google-labs-code/design.md). Review design changes together and validate the document with `pnpm design:lint`.
 
 ## Running it locally
 
@@ -48,7 +45,6 @@ pnpm start
 
 ```sh
 pnpm lint
-pnpm design:lint
 pnpm format:check
 pnpm build
 pnpm test

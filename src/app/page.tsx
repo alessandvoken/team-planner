@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import { getWorkItems } from '@/features/board/query';
 
+import { getWorkItems } from '@/features/board/query';
 import { SprintBoard } from '@/features/board/sprint-board';
 
 export const metadata: Metadata = {
