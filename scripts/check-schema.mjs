@@ -126,6 +126,14 @@ try {
     '23503',
   );
 
+  await client.query('savepoint guest_comment');
+  const guestComment = await client.query(
+    "insert into public.comments (work_item_id, author_id, body) values (1, null, 'Guest context') returning author_id",
+  );
+  assert.equal(guestComment.rows[0].author_id, null);
+  await client.query('rollback to savepoint guest_comment');
+  await client.query('release savepoint guest_comment');
+
   // Swapping positions is valid within one transaction, not as duplicate final order.
   await client.query('set constraints work_items_state_position_key deferred');
   await client.query(
@@ -170,7 +178,7 @@ try {
   `);
   assert.ok(permissions.every((permission) => !permission.allowed));
   console.log(
-    'Schema OK: seed, validation, foreign keys, order, identity, RLS and API permissions.',
+    'Schema OK: seed, validation, foreign keys, Guest comments, order, identity, RLS and API permissions.',
   );
 } finally {
   await client.query('rollback');
