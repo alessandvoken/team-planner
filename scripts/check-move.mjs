@@ -193,7 +193,7 @@ try {
   for (const body of [' '.repeat(20), 'Too short', 'x'.repeat(2001)]) {
     await assert.rejects(
       move('1', 'blocked', { blockedReason: { body, authorId: 'nora' } }),
-      /reason/,
+      { name: 'ZodError' },
     );
   }
   await assert.rejects(
@@ -252,6 +252,22 @@ try {
   await move('1', 'active');
   assert.deepEqual(await order('blocked'), ['5']);
   assert.deepEqual(await order('active'), ['2', '4', '1']);
+
+  await reset();
+  await move('1', 'blocked', {
+    blockedReason: {
+      body: '  Waiting for the shared API contract.  ',
+      authorId: null,
+    },
+  });
+  assert.deepEqual(await order('blocked'), ['1']);
+  assert.deepEqual((await snapshot()).comments, [
+    {
+      work_item_id: '1',
+      author_id: null,
+      body: 'Waiting for the shared API contract.',
+    },
+  ]);
 
   console.log(
     'Move SQL OK: insertion, reorder, no-ops, validation, version conflicts and atomic Blocked reason. Temporary data rolled back.',

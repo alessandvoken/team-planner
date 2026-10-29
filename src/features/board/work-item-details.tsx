@@ -8,6 +8,7 @@ import {
   TextField,
 } from '@heroui/react';
 
+import { COMMENT_MAX_LENGTH, commentBodySchema } from './schemas';
 import { WORK_ITEM_STATE_LABELS } from './states';
 import type { WorkItem, WorkItemComment } from './types';
 import { WorkItemCard } from './work-item-card';
@@ -32,6 +33,8 @@ export function WorkItemDetails({
   onAddComment,
   onDraftChange,
 }: WorkItemDetailsProps) {
+  const commentResult = commentBodySchema.safeParse(draft);
+
   return (
     <Modal>
       <WorkItemCard
@@ -127,9 +130,8 @@ export function WorkItemDetails({
                     className="space-y-4 border-t border-separator pt-5"
                     onSubmit={(event) => {
                       event.preventDefault();
-                      const body = draft.trim();
-                      if (!body || body.length > 2000) return;
-                      onAddComment(item.id, body);
+                      if (!commentResult.success) return;
+                      onAddComment(item.id, commentResult.data);
                       onDraftChange(item.id, '');
                     }}
                   >
@@ -141,7 +143,7 @@ export function WorkItemDetails({
                       <Label>Comment</Label>
                       <TextArea
                         rows={3}
-                        maxLength={2000}
+                        maxLength={COMMENT_MAX_LENGTH}
                         placeholder="Add context or share an update…"
                         className="border border-border bg-surface-secondary"
                       />
@@ -149,7 +151,11 @@ export function WorkItemDetails({
                         Comments stay in this tab until reload.
                       </Description>
                     </TextField>
-                    <Button type="submit" size="sm" isDisabled={!draft.trim()}>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      isDisabled={!commentResult.success}
+                    >
                       Add comment
                     </Button>
                   </form>

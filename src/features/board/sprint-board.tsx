@@ -13,6 +13,12 @@ import { useListData } from 'react-aria-components';
 
 import { BoardColumn } from './board-column';
 import {
+  BLOCKED_REASON_MIN_LENGTH,
+  COMMENT_MAX_LENGTH,
+  blockedReasonBodySchema,
+  commentBodySchema,
+} from './schemas';
+import {
   WORK_ITEM_STATE,
   type WorkItemState,
   type WorkItemInsertion,
@@ -38,8 +44,7 @@ export function SprintBoard({ initialItems }: { initialItems: WorkItem[] }) {
   const [draftsByItemId, setDraftsByItemId] = useState<Record<string, string>>(
     {},
   );
-  const isReasonValid =
-    reason.trim().length >= 20 && reason.trim().length <= 2000;
+  const reasonResult = blockedReasonBodySchema.safeParse(reason);
 
   function moveWorkItem(
     id: string,
@@ -81,14 +86,13 @@ export function SprintBoard({ initialItems }: { initialItems: WorkItem[] }) {
   }
 
   function addComment(itemId: string, body: string) {
-    const trimmedBody = body.trim();
-    if (!list.getItem(itemId) || !trimmedBody || trimmedBody.length > 2000)
-      return;
+    const result = commentBodySchema.safeParse(body);
+    if (!list.getItem(itemId) || !result.success) return;
 
     const comment: WorkItemComment = {
       id: crypto.randomUUID(),
       author: GUEST_AUTHOR,
-      body: trimmedBody,
+      body: result.data,
       createdAt: new Date().toISOString(),
     };
     setCommentsByItemId((prev) => ({
@@ -102,13 +106,13 @@ export function SprintBoard({ initialItems }: { initialItems: WorkItem[] }) {
   }
 
   function confirmBlockedMove() {
-    if (!pendingMove || !isReasonValid) return;
+    if (!pendingMove || !reasonResult.success) return;
     applyWorkItemMove(
       pendingMove.id,
       pendingMove.columnState,
       pendingMove.insertion,
     );
-    addComment(pendingMove.id, reason);
+    addComment(pendingMove.id, reasonResult.data);
     toast.success(`#${pendingMove.id} moved to Blocked`);
     setPendingMove(null);
   }
@@ -164,7 +168,8 @@ export function SprintBoard({ initialItems }: { initialItems: WorkItem[] }) {
                   className="border border-border bg-surface-secondary"
                 />
                 <Description>
-                  Use 20–2000 characters. The reason will be added as a comment.
+                  Use {BLOCKED_REASON_MIN_LENGTH}–{COMMENT_MAX_LENGTH}{' '}
+                  characters. The reason will be added as a comment.
                 </Description>
               </TextField>
             </Modal.Body>
@@ -174,7 +179,7 @@ export function SprintBoard({ initialItems }: { initialItems: WorkItem[] }) {
               </Button>
               <Button
                 type="button"
-                isDisabled={!isReasonValid}
+                isDisabled={!reasonResult.success}
                 onPress={confirmBlockedMove}
               >
                 Confirm

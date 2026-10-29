@@ -1,18 +1,7 @@
 import 'server-only';
 import { db } from '../../lib/db.ts';
-import {
-  WORK_ITEM_STATE,
-  type WorkItemInsertion,
-  type WorkItemState,
-} from './types.ts';
-
-type MoveWorkItemInput = {
-  id: string;
-  columnState: WorkItemState;
-  expectedVersion: number;
-  insertion?: WorkItemInsertion;
-  blockedReason?: { body: string; authorId: string };
-};
+import { moveWorkItemSchema, type MoveWorkItemInput } from './schemas.ts';
+import type { WorkItemState } from './types.ts';
 
 type WorkItemMoveRow = {
   id: string;
@@ -21,56 +10,13 @@ type WorkItemMoveRow = {
   version: number;
 };
 
-function isWorkItemId(value: string) {
-  return (
-    typeof value === 'string' &&
-    /^[1-9]\d{0,18}$/.test(value) &&
-    BigInt(value) <= 9223372036854775807n
-  );
-}
-
-export async function moveWorkItemInDB({
-  id,
-  columnState,
-  expectedVersion,
-  insertion,
-  blockedReason,
-}: MoveWorkItemInput): Promise<{ item: WorkItemMoveRow; changed: boolean }> {
-  if (
-    !isWorkItemId(id) ||
-    !WORK_ITEM_STATE.includes(columnState) ||
-    !Number.isInteger(expectedVersion) ||
-    expectedVersion < 1 ||
-    expectedVersion > 2147483647
-  ) {
-    throw new Error('Invalid work item move');
-  }
-  if (
-    insertion &&
-    (!isWorkItemId(insertion.targetId) ||
-      insertion.targetId === id ||
-      !['before', 'after'].includes(insertion.position))
-  ) {
-    throw new Error('Invalid insertion target');
-  }
-  const reason =
-    typeof blockedReason?.body === 'string'
-      ? blockedReason.body.trim()
-      : undefined;
-  if (
-    blockedReason &&
-    (typeof reason !== 'string' ||
-      reason.length < 20 ||
-      reason.length > 2000 ||
-      typeof blockedReason.authorId !== 'string' ||
-      !blockedReason.authorId.trim())
-  ) {
-    throw new Error(
-      'Blocked requires an author and a 20–2000-character reason',
-    );
-  }
-
+export async function moveWorkItemInDB(
+  input: MoveWorkItemInput,
+): Promise<{ item: WorkItemMoveRow; changed: boolean }> {
+  const { id, columnState, expectedVersion, insertion, blockedReason } =
+    moveWorkItemSchema.parse(input);
   const client = await db.connect();
+
   try {
     await client.query('BEGIN');
     await client.query("SET LOCAL lock_timeout = '5s'");
@@ -180,7 +126,7 @@ export async function moveWorkItemInDB({
       await client.query(
         `INSERT INTO public.comments (work_item_id, author_id, body)
          VALUES ($1, $2, $3)`,
-        [id, blockedReason.authorId, reason],
+        [id, blockedReason.authorId, blockedReason.body],
       );
     }
 

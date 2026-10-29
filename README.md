@@ -16,7 +16,7 @@ Work in progress: moves, comments and comment drafts are local to the current pa
 
 ## Stack
 
-Next.js 16 App Router, React 19, TypeScript, HeroUI 3, React Aria Components and Tailwind CSS 4. Server-side SQL uses `pg` with Supabase-hosted Postgres.
+Next.js 16 App Router, React 19, TypeScript, HeroUI 3, React Aria Components and Tailwind CSS 4. Server-side SQL uses `pg` with Supabase-hosted Postgres; shared Zod schemas validate move inputs, comments and Blocked reasons.
 
 ## Running it locally
 
@@ -52,7 +52,7 @@ pnpm db:check
 pnpm db:move:check
 ```
 
-`pnpm test` covers theme initialization. Database checks require `.env.local`: `pnpm db:check` verifies the connection and TLS; `pnpm db:move:check` checks the server-side move mutation on temporary tables and rolls back, without changing board data. This mutation is not connected to the UI yet. On an empty development database, `pnpm db:schema:check` validates the migrations and seed, then rolls back.
+`pnpm test` covers theme initialization and move/comment input validation. Database checks require `.env.local`: `pnpm db:check` verifies the connection and TLS; `pnpm db:move:check` checks the server-side move mutation on temporary tables and rolls back, without changing board data. This mutation is not connected to the UI yet. On an empty development database, `pnpm db:schema:check` validates the migrations and seed, then rolls back.
 
 ## Credits
 
