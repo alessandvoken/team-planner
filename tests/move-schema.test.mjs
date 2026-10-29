@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   blockedReasonBodySchema,
   commentBodySchema,
+  moveWorkItemActionSchema,
   moveWorkItemSchema,
 } from '../src/features/board/schemas.ts';
 
@@ -16,6 +17,32 @@ test('shared comment rules trim text and distinguish optional comments from requ
       assert.equal(schema.safeParse(body).success, false);
     }
     assert.equal(schema.safeParse('x'.repeat(2000)).success, true);
+  }
+});
+
+test('action input accepts reason text, strips browser-selected authors and shares move refinements', () => {
+  const input = { id: '1', columnState: 'blocked', expectedVersion: 1 };
+  const body = 'Waiting for the shared API contract.';
+  assert.deepEqual(
+    moveWorkItemActionSchema.parse({
+      ...input,
+      blockedReason: { body: `  ${body}  `, authorId: 'nora' },
+    }),
+    { ...input, blockedReason: { body } },
+  );
+  assert.equal(
+    moveWorkItemSchema.safeParse({ ...input, blockedReason: { body } }).success,
+    false,
+  );
+  for (const schema of [moveWorkItemActionSchema, moveWorkItemSchema]) {
+    assert.equal(schema.safeParse(input).success, true);
+    assert.equal(
+      schema.safeParse({
+        ...input,
+        insertion: { targetId: '1', position: 'before' },
+      }).success,
+      false,
+    );
   }
 });
 

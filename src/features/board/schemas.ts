@@ -24,7 +24,20 @@ const workItemIdSchema = z
     { error: 'Invalid work item ID' },
   );
 
-export const moveWorkItemSchema = z
+export const blockedReasonInputSchema = z.object({
+  body: blockedReasonBodySchema,
+});
+
+const blockedReasonSchema = blockedReasonInputSchema.extend({
+  authorId: z
+    .string()
+    .refine((value) => value.trim().length > 0, {
+      error: 'Invalid comment author',
+    })
+    .nullable(),
+});
+
+export const moveWorkItemActionSchema = z
   .object({
     id: workItemIdSchema,
     columnState: z.enum(WORK_ITEM_STATE),
@@ -35,21 +48,16 @@ export const moveWorkItemSchema = z
         position: z.enum(['before', 'after']),
       })
       .optional(),
-    blockedReason: z
-      .object({
-        body: blockedReasonBodySchema,
-        authorId: z
-          .string()
-          .refine((value) => value.trim().length > 0, {
-            error: 'Invalid comment author',
-          })
-          .nullable(),
-      })
-      .optional(),
+    blockedReason: blockedReasonInputSchema.optional(),
   })
   .refine((input) => input.insertion?.targetId !== input.id, {
     error: 'Insertion target must differ from the moved work item',
     path: ['insertion', 'targetId'],
   });
 
+export const moveWorkItemSchema = moveWorkItemActionSchema.safeExtend({
+  blockedReason: blockedReasonSchema.optional(),
+});
+
+export type MoveWorkItemActionInput = z.infer<typeof moveWorkItemActionSchema>;
 export type MoveWorkItemInput = z.infer<typeof moveWorkItemSchema>;

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { mock } from 'node:test';
 
+import { moveWorkItemAction } from '../src/features/board/actions.ts';
 import { moveWorkItemInDB } from '../src/features/board/mutations.ts';
 import { db } from '../src/lib/db.ts';
 
@@ -269,8 +270,44 @@ try {
     },
   ]);
 
+  await reset();
+  const beforeAction = await snapshot();
+  await assert.rejects(
+    moveWorkItemAction({ id: '1', columnState: 'invalid', expectedVersion: 1 }),
+    { name: 'ZodError' },
+  );
+  assert.deepEqual(await snapshot(), beforeAction);
+  const actionResult = await moveWorkItemAction({
+    id: '1',
+    columnState: 'blocked',
+    expectedVersion: 1,
+    blockedReason: {
+      body: '  Waiting for the shared API contract.  ',
+      authorId: 'nora',
+    },
+  });
+  assert.deepEqual(actionResult, {
+    item: { id: '1', state: 'blocked', position: 0, version: 2 },
+    changed: true,
+  });
+  assert.deepEqual((await snapshot()).comments, [
+    {
+      work_item_id: '1',
+      author_id: null,
+      body: 'Waiting for the shared API contract.',
+    },
+  ]);
+  const ordinaryMove = { id: '1', columnState: 'active', expectedVersion: 2 };
+  assert.equal((await moveWorkItemAction(ordinaryMove)).changed, true);
+  const beforeNoOp = await snapshot();
+  assert.equal(
+    (await moveWorkItemAction({ ...ordinaryMove, expectedVersion: 3 })).changed,
+    false,
+  );
+  assert.deepEqual(await snapshot(), beforeNoOp);
+
   console.log(
-    'Move SQL OK: insertion, reorder, no-ops, validation, version conflicts and atomic Blocked reason. Temporary data rolled back.',
+    'Move SQL OK: insertion, reorder, no-ops, validation, version conflicts, atomic Blocked reason and server-assigned Guest action. Temporary data rolled back.',
   );
 } finally {
   mock.restoreAll();
