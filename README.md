@@ -24,7 +24,7 @@ Use Node 22.18+ in the Node 22 release line and pnpm 11.
 
 1. Copy `.env.example` to `.env.local`.
 2. Set `DATABASE_URL` to your Supabase transaction-pooler URI, with a percent-encoded password. TLS is configured in the app; do not add SSL query parameters. The `NEXT_PUBLIC_SUPABASE_*` variables are reserved for future Realtime subscriptions.
-3. On an empty database, apply `supabase/migrations/202610250001_initial_board.sql`, then `supabase/seed.sql` (eight cards and three teammates). Skip this if already applied. The app does not run migrations automatically.
+3. Apply pending SQL files from `supabase/migrations/` in filename order. On a new database, also apply `supabase/seed.sql` once (eight cards and three teammates). Skip files already applied. The app does not run migrations automatically.
 4. Install dependencies and start the app:
 
 ```sh
@@ -49,9 +49,10 @@ pnpm format:check
 pnpm build
 pnpm test
 pnpm db:check
+pnpm db:move:check
 ```
 
-`pnpm test` covers theme initialization. `pnpm db:check` requires `.env.local` and verifies the database connection and TLS. On an empty development database, `pnpm db:schema:check` validates the migration and seed, then rolls back.
+`pnpm test` covers theme initialization. Database checks require `.env.local`: `pnpm db:check` verifies the connection and TLS; `pnpm db:move:check` checks the server-side move mutation on temporary tables and rolls back, without changing board data. This mutation is not connected to the UI yet. On an empty development database, `pnpm db:schema:check` validates the migrations and seed, then rolls back.
 
 ## Credits
 

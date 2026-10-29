@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 
 import { MOCK_WORK_ITEMS } from '../src/features/board/mock-work-items.ts';
 import { db } from '../src/lib/db.ts';
@@ -17,15 +17,12 @@ try {
     0,
     'Schema check needs a database without board tables',
   );
-  await client.query(
-    await readFile(
-      new URL(
-        '../supabase/migrations/202610250001_initial_board.sql',
-        import.meta.url,
-      ),
-      'utf8',
-    ),
-  );
+  const migrations = new URL('../supabase/migrations/', import.meta.url);
+  for (const file of (await readdir(migrations))
+    .filter((file) => file.endsWith('.sql'))
+    .sort()) {
+    await client.query(await readFile(new URL(file, migrations), 'utf8'));
+  }
   await client.query(
     await readFile(new URL('../supabase/seed.sql', import.meta.url), 'utf8'),
   );
@@ -63,6 +60,19 @@ try {
       await client.query('release savepoint invalid_input');
     }
   }
+
+  await client.query('savepoint blocked_state');
+  const blocked = await client.query(
+    "update public.work_items set state = 'blocked' where id = 1 returning state",
+  );
+  assert.equal(blocked.rows[0].state, 'blocked');
+  await rejects(
+    "update public.work_items set state = 'invalid' where id = 1",
+    [],
+    '23514',
+  );
+  await client.query('rollback to savepoint blocked_state');
+  await client.query('release savepoint blocked_state');
 
   for (const title of ['', ' \t\n', 'x'.repeat(201)]) {
     await rejects(
