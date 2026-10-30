@@ -12,7 +12,7 @@ Live demo: <https://team-planner-delta.vercel.app>
 - Moving into Blocked requires a reason, which is added to the item's comments on confirmation.
 - Light and dark themes, with a saved manual preference.
 
-Moves, order and Blocked reasons are saved to Postgres and survive reload. Other comments and unsent drafts remain local to the page. New comments are attributed to Guest; no login is required. Backlog and real-time collaboration are not implemented yet.
+Moves update immediately and roll back if saving fails. Order and Blocked reasons are saved to Postgres and survive reload. Other comments and unsent drafts remain local to the page. New comments are attributed to Guest; no login is required. Backlog and real-time collaboration are not implemented yet.
 
 ## Stack
 

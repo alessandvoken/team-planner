@@ -24,7 +24,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
       </head>
       <body className="antialiased">
-        <ToastProvider placement="top" className="top-24" />
+        <ToastProvider placement="top" className="board-toast-region" />
         <div className="flex min-h-dvh flex-col p-6">
           <SiteHeader />
           <main className="flex flex-1 flex-col">{children}</main>

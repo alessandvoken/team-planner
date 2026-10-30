@@ -16,7 +16,7 @@ export type CardDragAndDropOptions = {
     id: string,
     destination: WorkItemState,
     insertion?: WorkItemInsertion,
-  ) => Promise<void>;
+  ) => void;
 };
 
 export function useCardDragAndDrop({
@@ -71,17 +71,17 @@ export function useCardDragAndDrop({
       for (const droppedItem of event.items.filter(isTextDropItem)) {
         if (!droppedItem.types.has('application/x-work-item')) continue;
         const id = await droppedItem.getText('application/x-work-item');
-        await onMove(id, state, {
+        onMove(id, state, {
           targetId: String(event.target.key),
           position,
         });
       }
     },
-    onReorder: async (event) => {
+    onReorder: (event) => {
       const position = event.target.dropPosition;
       if (position === 'on') return;
       for (const key of event.keys) {
-        await onMove(String(key), state, {
+        onMove(String(key), state, {
           targetId: String(event.target.key),
           position,
         });
@@ -95,7 +95,7 @@ export function useCardDragAndDrop({
       for (const droppedItem of droppedItems) {
         if (!droppedItem.types.has('application/x-work-item')) continue;
         const id = await droppedItem.getText('application/x-work-item');
-        await onMove(id, state);
+        onMove(id, state);
       }
     },
   });

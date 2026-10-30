@@ -46,6 +46,21 @@
 }
 
 @layer components {
+  .board-toast-region {
+    top: max(1rem, env(safe-area-inset-top));
+  }
+
+  .blocked-reason-backdrop {
+    height: var(--visual-viewport-height, 100dvh);
+    overscroll-behavior: contain;
+
+    .modal__container {
+      min-height: var(--visual-viewport-height, 100dvh);
+      padding-top: max(1rem, env(safe-area-inset-top));
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+  }
+
   /* Clip both the preview and React Aria's setDragImage wrapper for WebKit. */
   .work-item-drag-preview,
   div:has(> .work-item-drag-preview) {

@@ -12,6 +12,7 @@ import { useRef, useState } from 'react';
 
 import { moveWorkItemAction } from './actions';
 import { BoardColumn } from './board-column';
+import { optimisticMove } from './optimistic-move';
 import {
   BLOCKED_REASON_MIN_LENGTH,
   COMMENT_MAX_LENGTH,
@@ -19,7 +20,6 @@ import {
   commentBodySchema,
   type MoveWorkItemActionInput,
 } from './schemas';
-import { WORK_ITEM_STATE_LABELS } from './states';
 import {
   WORK_ITEM_STATE,
   type WorkItemState,
@@ -67,44 +67,49 @@ export function SprintBoard({
     if (savingRef.current) return null;
     savingRef.current = true;
     setIsSaving(true);
+    const previousItems = items;
+    setItems(
+      optimisticMove(items, input.id, input.columnState, input.insertion),
+    );
+    if (input.blockedReason) setPendingMove(null);
+
+    function restoreMove(authoritativeItems = previousItems) {
+      setItems(authoritativeItems);
+      if (input.blockedReason) {
+        const current = authoritativeItems.find((item) => item.id === input.id);
+        if (current && current.state !== 'blocked') {
+          setPendingMove({
+            id: input.id,
+            columnState: input.columnState,
+            insertion: input.insertion,
+            expectedVersion: current.version,
+          });
+        }
+      }
+    }
+
     try {
       const savedItem = await moveWorkItemAction(input);
       if (savedItem.board) {
         setItems(savedItem.board.items);
         setSavedComments(savedItem.board.commentsByItemId);
-        if (!savedItem.ok) {
-          setPendingMove((previous) => {
-            if (!previous) return null;
-            const current = savedItem.board.items.find(
-              (item) => item.id === previous.id,
-            );
-            if (!current || current.state === 'blocked') return null;
-            return { ...previous, expectedVersion: current.version };
-          });
-        }
       }
       if (!savedItem.ok) {
+        restoreMove(savedItem.board?.items);
         toast.danger(savedItem.error);
         return null;
       }
-      if (savedItem.result.changed) {
-        const destination = WORK_ITEM_STATE_LABELS[input.columnState];
+      if (savedItem.result.changed && input.blockedReason) {
         const movedItem = savedItem.board.items.find(
           (item) => item.id === input.id,
         )!;
-        const identity =
-          input.columnState === 'blocked'
-            ? `${WORK_ITEM_KINDS[movedItem.kind].label} #${input.id}`
-            : `#${input.id}`;
         toast.success(
-          items.find((item) => item.id === input.id)?.state ===
-            input.columnState
-            ? `${identity} reordered in ${destination}`
-            : `${identity} moved to ${destination}`,
+          `${WORK_ITEM_KINDS[movedItem.kind].label} #${input.id} moved to Blocked`,
         );
       }
       return savedItem;
     } catch {
+      restoreMove();
       toast.danger('Unable to save the move. Please try again.');
       return null;
     } finally {
@@ -113,7 +118,7 @@ export function SprintBoard({
     }
   }
 
-  async function moveWorkItem(
+  function moveWorkItem(
     id: string,
     columnState: WorkItemState,
     insertion?: WorkItemInsertion,
@@ -139,7 +144,7 @@ export function SprintBoard({
       setReason('');
       return;
     }
-    await saveWorkItemMove({
+    void saveWorkItemMove({
       id,
       columnState,
       insertion,
@@ -167,20 +172,16 @@ export function SprintBoard({
     setDraftsByItemId((previous) => ({ ...previous, [itemId]: value }));
   }
 
-  async function confirmBlockedMove() {
+  function confirmBlockedMove() {
     if (savingRef.current || !pendingMove || !reasonResult.success) return;
 
-    const savedMove = await saveWorkItemMove({
+    void saveWorkItemMove({
       id: pendingMove.id,
       columnState: pendingMove.columnState,
       insertion: pendingMove.insertion,
       expectedVersion: pendingMove.expectedVersion,
       blockedReason: { body: reasonResult.data },
     });
-
-    if (!savedMove) return;
-
-    setPendingMove(null);
   }
 
   return (
@@ -212,6 +213,7 @@ export function SprintBoard({
         {isSaving ? 'Saving work item move…' : ''}
       </p>
       <Modal.Backdrop
+        className="blocked-reason-backdrop"
         isDismissable={false}
         isKeyboardDismissDisabled={isSaving}
         isOpen={pendingMove !== null}
@@ -222,7 +224,7 @@ export function SprintBoard({
           }
         }}
       >
-        <Modal.Container size="sm" scroll="inside">
+        <Modal.Container size="sm" placement="center" scroll="outside">
           <Modal.Dialog aria-busy={isSaving}>
             <Modal.CloseTrigger isDisabled={isSaving} />
             <Modal.Header className="pr-8">
