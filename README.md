@@ -24,7 +24,7 @@ Use Node 22.18+ in the Node 22 release line and pnpm 11.
 
 1. Copy `.env.example` to `.env.local`.
 2. Set `DATABASE_URL` to your Supabase transaction-pooler URI, with a percent-encoded password. TLS is configured in the app; do not add SSL query parameters. The `NEXT_PUBLIC_SUPABASE_*` variables are reserved for future Realtime subscriptions.
-3. Apply pending SQL files from `supabase/migrations/` in filename order. On a new database, also apply `supabase/seed.sql` once (eight cards and three teammates). Skip files already applied. The app does not run migrations automatically.
+3. Apply pending SQL files from `supabase/migrations/` in filename order. On a new database, also apply `supabase/seed.sql` once (eight cards and three teammates). Skip files already applied. Local startup does not apply migrations.
 4. Install dependencies and start the app:
 
 ```sh
@@ -41,6 +41,8 @@ pnpm build
 pnpm start
 ```
 
+Vercel Production builds apply pending migrations before building. Set `MIGRATION_DATABASE_URL` as a Production-only Secret to the Supabase session-pooler URI (port 5432). Preview builds skip migrations.
+
 ## Checks
 
 ```sh
@@ -52,7 +54,7 @@ pnpm db:check
 pnpm db:move:check
 ```
 
-`pnpm test` covers theme initialization and move/comment input validation. Database checks require `.env.local`: `pnpm db:check` verifies the connection and TLS; `pnpm db:move:check` checks the server-side move mutation on temporary tables and rolls back, without changing board data. This mutation is not connected to the UI yet. On an empty development database, `pnpm db:schema:check` validates the migrations and seed, then rolls back.
+`pnpm test` covers theme initialization, move/comment input validation and deployment sequencing. Database checks require `.env.local`: `pnpm db:check` verifies the connection and TLS; `pnpm db:move:check` checks the server-side move mutation on temporary tables and rolls back, without changing board data. This mutation is not connected to the UI yet. On an empty development database, `pnpm db:schema:check` validates the migrations and seed, then rolls back.
 
 ## Credits
 

@@ -7,8 +7,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:vercel": "node scripts/build-vercel.mjs",
     "start": "next start",
     "db:check": "node --conditions=react-server --env-file=.env.local scripts/check-db.mjs",
+    "db:migrate": "supabase db push --db-url \"${MIGRATION_DATABASE_URL:?MIGRATION_DATABASE_URL is not set}\" --yes",
     "db:move:check": "node --conditions=react-server --env-file=.env.local scripts/check-move.mjs",
     "db:schema:check": "node --conditions=react-server --env-file=.env.local scripts/check-schema.mjs",
     "lint": "eslint .",
