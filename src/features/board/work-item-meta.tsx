@@ -3,7 +3,7 @@ import { BookOpen, Bug, SquareCheck, UserRound } from 'lucide-react';
 
 import type { WorkItem, WorkItemKind } from './types';
 
-const WORK_ITEM_KINDS = {
+export const WORK_ITEM_KINDS = {
   bug: { label: 'Bug', Icon: Bug, color: 'danger' },
   story: { label: 'User story', Icon: BookOpen, color: 'accent' },
   task: { label: 'Task', Icon: SquareCheck, color: 'default' },

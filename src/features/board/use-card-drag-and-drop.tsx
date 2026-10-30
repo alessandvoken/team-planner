@@ -11,20 +11,23 @@ import { WorkItemCard } from './work-item-card';
 export type CardDragAndDropOptions = {
   state: WorkItemState;
   items: WorkItem[];
+  isDisabled: boolean;
   onMove: (
     id: string,
     destination: WorkItemState,
     insertion?: WorkItemInsertion,
-  ) => void;
+  ) => Promise<void>;
 };
 
 export function useCardDragAndDrop({
   state,
   items,
+  isDisabled,
   onMove,
 }: CardDragAndDropOptions) {
   const listRef = useRef<HTMLDivElement>(null);
   const { dragAndDropHooks } = useDragAndDrop<WorkItem>({
+    isDisabled,
     onDragStart: (event) => {
       const key = [...event.keys][0];
       const card = listRef.current?.querySelector<HTMLElement>(
@@ -68,17 +71,17 @@ export function useCardDragAndDrop({
       for (const droppedItem of event.items.filter(isTextDropItem)) {
         if (!droppedItem.types.has('application/x-work-item')) continue;
         const id = await droppedItem.getText('application/x-work-item');
-        onMove(id, state, {
+        await onMove(id, state, {
           targetId: String(event.target.key),
           position,
         });
       }
     },
-    onReorder: (event) => {
+    onReorder: async (event) => {
       const position = event.target.dropPosition;
       if (position === 'on') return;
       for (const key of event.keys) {
-        onMove(String(key), state, {
+        await onMove(String(key), state, {
           targetId: String(event.target.key),
           position,
         });
@@ -92,7 +95,7 @@ export function useCardDragAndDrop({
       for (const droppedItem of droppedItems) {
         if (!droppedItem.types.has('application/x-work-item')) continue;
         const id = await droppedItem.getText('application/x-work-item');
-        onMove(id, state);
+        await onMove(id, state);
       }
     },
   });

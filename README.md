@@ -7,12 +7,12 @@ Live demo: <https://team-planner-delta.vercel.app>
 ## Features
 
 - A sprint board with New, Active, Blocked, Resolved and Closed columns.
-- Work items loaded from Postgres, with drag and drop to move and reorder cards using a pointer or keyboard.
+- Work items loaded from Postgres, with saved pointer and keyboard moves and reordering.
 - Type, priority and assignee on cards; descriptions and local comments in a detail modal.
 - Moving into Blocked requires a reason, which is added to the item's comments on confirmation.
 - Light and dark themes, with a saved manual preference.
 
-Work in progress: moves, comments and comment drafts are local to the current page. They survive moves between columns but reset on reload, which restores the database state. Comments are attributed to Guest; no login is required. Backlog and real-time collaboration are not implemented yet.
+Moves, order and Blocked reasons are saved to Postgres and survive reload. Other comments and unsent drafts remain local to the page. New comments are attributed to Guest; no login is required. Backlog and real-time collaboration are not implemented yet.
 
 ## Stack
 
@@ -54,7 +54,7 @@ pnpm db:check
 pnpm db:move:check
 ```
 
-`pnpm test` covers theme initialization, move/comment input validation and deployment sequencing. Database checks require `.env.local`: `pnpm db:check` verifies the connection and TLS; `pnpm db:move:check` checks the server-side move mutation on temporary tables and rolls back, without changing board data. This mutation is not connected to the UI yet. On an empty development database, `pnpm db:schema:check` validates the migrations and seed, then rolls back.
+`pnpm test` runs Node tests for theme initialization, move/comment input validation and deployment sequencing. Database checks require `.env.local`: `pnpm db:check` verifies the connection and TLS; `pnpm db:move:check` is a PostgreSQL integration check for moves, saved reason reads, conflicts and restricted-role permissions on temporary tables, then rolls back without changing board data. On an empty development database, `pnpm db:schema:check` validates the migrations and seed, then rolls back.
 
 ## Credits
 

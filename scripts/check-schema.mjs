@@ -28,7 +28,7 @@ try {
   );
 
   const { rows: items } = await client.query(`
-    select w.id, w.title, w.kind, w.state, w.description, w.priority,
+    select w.id, w.title, w.kind, w.state, w.description, w.priority, w.version,
       case when t.id is null then null else json_build_object('id', t.id, 'name', t.name) end as assignee
     from public.work_items w
     left join public.teammates t on t.id = w.assignee_id
@@ -177,6 +177,35 @@ try {
     cross join (values ('SELECT'), ('INSERT'), ('UPDATE'), ('DELETE')) p(privilege)
   `);
   assert.ok(permissions.every((permission) => !permission.allowed));
+  const { rows: appRole } = await client.query(`
+    select rolcanlogin, rolsuper, rolcreaterole, rolcreatedb, rolbypassrls
+    from pg_roles where rolname = 'team_planner_app'
+  `);
+  assert.deepEqual(appRole, [
+    {
+      rolcanlogin: false,
+      rolsuper: false,
+      rolcreaterole: false,
+      rolcreatedb: false,
+      rolbypassrls: false,
+    },
+  ]);
+  assert.equal(
+    (
+      await client.query(
+        "select has_column_privilege('team_planner_app', 'public.work_items', 'state', 'UPDATE') as allowed",
+      )
+    ).rows[0].allowed,
+    true,
+  );
+  assert.equal(
+    (
+      await client.query(
+        "select has_column_privilege('team_planner_app', 'public.work_items', 'title', 'UPDATE') as allowed",
+      )
+    ).rows[0].allowed,
+    false,
+  );
   console.log(
     'Schema OK: seed, validation, foreign keys, Guest comments, order, identity, RLS and API permissions.',
   );

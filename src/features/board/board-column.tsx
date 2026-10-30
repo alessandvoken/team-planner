@@ -20,6 +20,7 @@ export function BoardColumn({
   state,
   items,
   onMove,
+  isDisabled,
   commentsByItemId,
   draftsByItemId,
   onAddComment,
@@ -29,6 +30,7 @@ export function BoardColumn({
     state,
     items,
     onMove,
+    isDisabled,
   });
 
   return (
@@ -53,6 +55,7 @@ export function BoardColumn({
           draftsByItemId,
           onAddComment,
           onDraftChange,
+          isDisabled,
         ]}
         className="grid min-h-24 flex-1 content-start gap-3"
         renderEmptyState={({ isDropTarget }) =>
@@ -72,7 +75,7 @@ export function BoardColumn({
           <GridListItem
             id={item.id}
             textValue={item.title}
-            className="work-item-drag-source relative cursor-grab rounded-[min(32px,var(--radius-3xl))] outline-offset-2 outline-accent no-highlight focus-visible:outline-2 data-[dragging]:cursor-grabbing data-[dragging]:opacity-0"
+            className="work-item-drag-source relative cursor-grab rounded-[min(32px,var(--radius-3xl))] outline-offset-2 outline-accent no-highlight focus-visible:outline-2 data-dragging:cursor-grabbing data-dragging:opacity-0"
           >
             <WorkItemDetails
               item={item}
@@ -83,6 +86,7 @@ export function BoardColumn({
             />
             <Button
               slot="drag"
+              isDisabled={isDisabled}
               size="sm"
               variant="secondary"
               aria-label={`Move #${item.id}: ${item.title}`}

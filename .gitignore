@@ -13,6 +13,7 @@ dist
 next-env.d.ts
 *.tsbuildinfo
 .vercel/
+.playwright-mcp/
 *.local
 
 # Local agent skills

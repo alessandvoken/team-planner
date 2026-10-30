@@ -8,16 +8,18 @@ import {
   TextField,
   toast,
 } from '@heroui/react';
-import { useState } from 'react';
-import { useListData } from 'react-aria-components';
+import { useRef, useState } from 'react';
 
+import { moveWorkItemAction } from './actions';
 import { BoardColumn } from './board-column';
 import {
   BLOCKED_REASON_MIN_LENGTH,
   COMMENT_MAX_LENGTH,
   blockedReasonBodySchema,
   commentBodySchema,
+  type MoveWorkItemActionInput,
 } from './schemas';
+import { WORK_ITEM_STATE_LABELS } from './states';
 import {
   WORK_ITEM_STATE,
   type WorkItemState,
@@ -25,69 +27,129 @@ import {
   type WorkItem,
   type WorkItemComment,
 } from './types';
+import { WORK_ITEM_KINDS } from './work-item-meta';
 
 type PendingMove = {
   id: string;
   columnState: WorkItemState;
   insertion?: WorkItemInsertion;
+  expectedVersion: number;
 };
 
 const GUEST_AUTHOR = { id: 'guest', name: 'Guest' };
 
-export function SprintBoard({ initialItems }: { initialItems: WorkItem[] }) {
-  const list = useListData<WorkItem>({ initialItems });
+export function SprintBoard({
+  initialItems,
+  initialComments,
+}: {
+  initialItems: WorkItem[];
+  initialComments: Record<string, WorkItemComment[]>;
+}) {
+  const [items, setItems] = useState(initialItems);
+  const [savedComments, setSavedComments] = useState(initialComments);
+  const [isSaving, setIsSaving] = useState(false);
+  const savingRef = useRef(false);
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
   const [reason, setReason] = useState('');
-  const [commentsByItemId, setCommentsByItemId] = useState<
+  const [localComments, setLocalComments] = useState<
     Record<string, WorkItemComment[]>
   >({});
   const [draftsByItemId, setDraftsByItemId] = useState<Record<string, string>>(
     {},
   );
   const reasonResult = blockedReasonBodySchema.safeParse(reason);
+  const commentsByItemId = { ...savedComments };
+  for (const [id, comments] of Object.entries(localComments)) {
+    commentsByItemId[id] = [...(savedComments[id] ?? []), ...comments];
+  }
 
-  function moveWorkItem(
+  async function saveWorkItemMove(input: MoveWorkItemActionInput) {
+    if (savingRef.current) return null;
+    savingRef.current = true;
+    setIsSaving(true);
+    try {
+      const savedItem = await moveWorkItemAction(input);
+      if (savedItem.board) {
+        setItems(savedItem.board.items);
+        setSavedComments(savedItem.board.commentsByItemId);
+        if (!savedItem.ok) {
+          setPendingMove((previous) => {
+            if (!previous) return null;
+            const current = savedItem.board.items.find(
+              (item) => item.id === previous.id,
+            );
+            if (!current || current.state === 'blocked') return null;
+            return { ...previous, expectedVersion: current.version };
+          });
+        }
+      }
+      if (!savedItem.ok) {
+        toast.danger(savedItem.error);
+        return null;
+      }
+      if (savedItem.result.changed) {
+        const destination = WORK_ITEM_STATE_LABELS[input.columnState];
+        const movedItem = savedItem.board.items.find(
+          (item) => item.id === input.id,
+        )!;
+        const identity =
+          input.columnState === 'blocked'
+            ? `${WORK_ITEM_KINDS[movedItem.kind].label} #${input.id}`
+            : `#${input.id}`;
+        toast.success(
+          items.find((item) => item.id === input.id)?.state ===
+            input.columnState
+            ? `${identity} reordered in ${destination}`
+            : `${identity} moved to ${destination}`,
+        );
+      }
+      return savedItem;
+    } catch {
+      toast.danger('Unable to save the move. Please try again.');
+      return null;
+    } finally {
+      savingRef.current = false;
+      setIsSaving(false);
+    }
+  }
+
+  async function moveWorkItem(
     id: string,
     columnState: WorkItemState,
     insertion?: WorkItemInsertion,
   ) {
-    const item = list.getItem(id);
+    if (savingRef.current || pendingMove) return;
+    const item = items.find((item) => item.id === id);
     if (!item) return;
 
     if (insertion) {
-      const target = list.getItem(insertion.targetId);
+      const target = items.find((item) => item.id === insertion.targetId);
       if (!target || target.id === id || target.state !== columnState) return;
     } else if (item.state === columnState) {
       return;
     }
 
     if (columnState === 'blocked' && item.state !== 'blocked') {
-      setPendingMove({ id, columnState, insertion });
+      setPendingMove({
+        id,
+        columnState,
+        insertion,
+        expectedVersion: item.version,
+      });
       setReason('');
       return;
     }
-    applyWorkItemMove(id, columnState, insertion);
-  }
-
-  function applyWorkItemMove(
-    id: string,
-    columnState: WorkItemState,
-    insertion?: WorkItemInsertion,
-  ) {
-    list.update(id, (previous) => ({ ...previous, state: columnState }));
-
-    if (!insertion) {
-      list.move(id, list.items.length - 1);
-    } else if (insertion.position === 'before') {
-      list.moveBefore(insertion.targetId, [id]);
-    } else {
-      list.moveAfter(insertion.targetId, [id]);
-    }
+    await saveWorkItemMove({
+      id,
+      columnState,
+      insertion,
+      expectedVersion: item.version,
+    });
   }
 
   function addComment(itemId: string, body: string) {
     const result = commentBodySchema.safeParse(body);
-    if (!list.getItem(itemId) || !result.success) return;
+    if (!items.some((item) => item.id === itemId) || !result.success) return;
 
     const comment: WorkItemComment = {
       id: crypto.randomUUID(),
@@ -95,7 +157,7 @@ export function SprintBoard({ initialItems }: { initialItems: WorkItem[] }) {
       body: result.data,
       createdAt: new Date().toISOString(),
     };
-    setCommentsByItemId((prev) => ({
+    setLocalComments((prev) => ({
       ...prev,
       [itemId]: [...(prev[itemId] ?? []), comment],
     }));
@@ -105,15 +167,19 @@ export function SprintBoard({ initialItems }: { initialItems: WorkItem[] }) {
     setDraftsByItemId((previous) => ({ ...previous, [itemId]: value }));
   }
 
-  function confirmBlockedMove() {
-    if (!pendingMove || !reasonResult.success) return;
-    applyWorkItemMove(
-      pendingMove.id,
-      pendingMove.columnState,
-      pendingMove.insertion,
-    );
-    addComment(pendingMove.id, reasonResult.data);
-    toast.success(`#${pendingMove.id} moved to Blocked`);
+  async function confirmBlockedMove() {
+    if (savingRef.current || !pendingMove || !reasonResult.success) return;
+
+    const savedMove = await saveWorkItemMove({
+      id: pendingMove.id,
+      columnState: pendingMove.columnState,
+      insertion: pendingMove.insertion,
+      expectedVersion: pendingMove.expectedVersion,
+      blockedReason: { body: reasonResult.data },
+    });
+
+    if (!savedMove) return;
+
     setPendingMove(null);
   }
 
@@ -121,16 +187,18 @@ export function SprintBoard({ initialItems }: { initialItems: WorkItem[] }) {
     <>
       <div
         data-board
+        aria-busy={isSaving}
         className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5"
       >
         {WORK_ITEM_STATE.map((state) => {
-          const items = list.items.filter((item) => item.state === state);
+          const columnItems = items.filter((item) => item.state === state);
 
           return (
             <BoardColumn
               key={state}
               state={state}
-              items={items}
+              items={columnItems}
+              isDisabled={isSaving || pendingMove !== null}
               onMove={moveWorkItem}
               commentsByItemId={commentsByItemId}
               draftsByItemId={draftsByItemId}
@@ -140,19 +208,23 @@ export function SprintBoard({ initialItems }: { initialItems: WorkItem[] }) {
           );
         })}
       </div>
+      <p role="status" className="sr-only">
+        {isSaving ? 'Saving work item move…' : ''}
+      </p>
       <Modal.Backdrop
         isDismissable={false}
+        isKeyboardDismissDisabled={isSaving}
         isOpen={pendingMove !== null}
         onOpenChange={(isOpen) => {
-          if (!isOpen && pendingMove) {
+          if (!isOpen && pendingMove && !savingRef.current) {
             toast.warning('Issues in Blocked require an additional comment.');
             setPendingMove(null);
           }
         }}
       >
         <Modal.Container size="sm" scroll="inside">
-          <Modal.Dialog>
-            <Modal.CloseTrigger />
+          <Modal.Dialog aria-busy={isSaving}>
+            <Modal.CloseTrigger isDisabled={isSaving} />
             <Modal.Header className="pr-8">
               <Modal.Heading>Work item blocked</Modal.Heading>
             </Modal.Header>
@@ -162,6 +234,7 @@ export function SprintBoard({ initialItems }: { initialItems: WorkItem[] }) {
                 aria-label="Reason"
                 value={reason}
                 onChange={setReason}
+                isDisabled={isSaving}
               >
                 <TextArea
                   rows={5}
@@ -174,12 +247,18 @@ export function SprintBoard({ initialItems }: { initialItems: WorkItem[] }) {
               </TextField>
             </Modal.Body>
             <Modal.Footer>
-              <Button type="button" slot="close" variant="secondary">
+              <Button
+                type="button"
+                slot="close"
+                variant="secondary"
+                isDisabled={isSaving}
+              >
                 Cancel
               </Button>
               <Button
                 type="button"
-                isDisabled={!reasonResult.success}
+                isDisabled={!reasonResult.success || isSaving}
+                isPending={isSaving}
                 onPress={confirmBlockedMove}
               >
                 Confirm

@@ -1,7 +1,8 @@
 import 'server-only';
-import { db } from '../../lib/db.ts';
+import { withBoardTransaction } from '../../lib/db.ts';
+import { getBoardData } from './query.ts';
 import { moveWorkItemSchema, type MoveWorkItemInput } from './schemas.ts';
-import type { WorkItemState } from './types.ts';
+import type { BoardData, WorkItemState } from './types.ts';
 
 type WorkItemMoveRow = {
   id: string;
@@ -12,16 +13,10 @@ type WorkItemMoveRow = {
 
 export async function moveWorkItemInDB(
   input: MoveWorkItemInput,
-): Promise<{ item: WorkItemMoveRow; changed: boolean }> {
+): Promise<{ item: WorkItemMoveRow; changed: boolean; board: BoardData }> {
   const { id, columnState, expectedVersion, insertion, blockedReason } =
     moveWorkItemSchema.parse(input);
-  const client = await db.connect();
-
-  try {
-    await client.query('BEGIN');
-    await client.query("SET LOCAL lock_timeout = '5s'");
-    await client.query("SET LOCAL statement_timeout = '10s'");
-
+  return withBoardTransaction(async (client) => {
     // ponytail: serialize moves on this single board; use per-board locks if more boards enter.
     await client.query(
       "SELECT pg_advisory_xact_lock(hashtext('team-planner:work-item-order'))",
@@ -40,7 +35,12 @@ export async function moveWorkItemInDB(
     const item = result.rows[0];
     if (!item) throw new Error('Work item not found');
     if (item.version !== expectedVersion) {
-      throw new Error('Work item changed; refresh the board and try again');
+      throw new Error(
+        'Work item changed; review the refreshed board and try again',
+        {
+          cause: 'WORK_ITEM_CONFLICT',
+        },
+      );
     }
 
     const enteringBlocked =
@@ -82,8 +82,7 @@ export async function moveWorkItemInDB(
     }
 
     if (item.state === columnState && item.position === position) {
-      await client.query('COMMIT');
-      return { item, changed: false };
+      return { item, changed: false, board: await getBoardData(client) };
     }
 
     if (item.state === columnState) {
@@ -130,12 +129,10 @@ export async function moveWorkItemInDB(
       );
     }
 
-    await client.query('COMMIT');
-    return { item: moved.rows[0], changed: true };
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
-  }
+    return {
+      item: moved.rows[0],
+      changed: true,
+      board: await getBoardData(client),
+    };
+  });
 }

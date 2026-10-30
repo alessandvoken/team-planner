@@ -3,7 +3,9 @@ import { readFile, readdir } from 'node:fs/promises';
 import { mock } from 'node:test';
 
 import { moveWorkItemAction } from '../src/features/board/actions.ts';
+import { MOCK_WORK_ITEMS } from '../src/features/board/mock-work-items.ts';
 import { moveWorkItemInDB } from '../src/features/board/mutations.ts';
+import { getBoardData } from '../src/features/board/query.ts';
 import { db } from '../src/lib/db.ts';
 
 const client = await db.connect();
@@ -34,10 +36,12 @@ try {
         await client.query(
           'SET CONSTRAINTS work_items_state_position_key IMMEDIATE',
         );
+        await client.query('RESET ROLE');
         return client.query('RELEASE SAVEPOINT checked_move');
       }
       if (sql === 'ROLLBACK') {
         await client.query('ROLLBACK TO SAVEPOINT checked_move');
+        await client.query('RESET ROLE');
         return client.query('RELEASE SAVEPOINT checked_move');
       }
       return client.query(
@@ -49,6 +53,62 @@ try {
     },
     release() {},
   }));
+
+  assert.deepEqual(
+    (await getBoardData()).items
+      .filter((item) => MOCK_WORK_ITEMS.some((mock) => mock.id === item.id))
+      .sort((a, b) => Number(a.id) - Number(b.id)),
+    MOCK_WORK_ITEMS,
+  );
+
+  async function rejectsAsApp(sql, values = []) {
+    await client.query('SAVEPOINT denied_app_operation');
+    try {
+      await client.query('SET LOCAL ROLE team_planner_app');
+      await assert.rejects(client.query(sql, values), { code: '42501' });
+    } finally {
+      await client.query('ROLLBACK TO SAVEPOINT denied_app_operation');
+      await client.query('RELEASE SAVEPOINT denied_app_operation');
+    }
+  }
+  for (const sql of [
+    'DELETE FROM pg_temp.work_items WHERE id = 1',
+    "UPDATE pg_temp.work_items SET title = 'Not permitted' WHERE id = 1",
+    "INSERT INTO pg_temp.teammates (id, name) VALUES ('fake', 'Fake teammate')",
+    'TRUNCATE pg_temp.comments',
+  ]) {
+    await rejectsAsApp(sql);
+  }
+  await rejectsAsApp(
+    "INSERT INTO pg_temp.comments (work_item_id, author_id, body) VALUES (1, 'nora', 'Cannot impersonate a teammate')",
+  );
+
+  // A failure after updates but before COMMIT must not persist a move or reason.
+  const beforeReadFailure = await client.query(
+    'SELECT id, state, position, version FROM pg_temp.work_items ORDER BY id',
+  );
+  await client.query('REVOKE SELECT ON pg_temp.comments FROM team_planner_app');
+  const readFailure = await moveWorkItemAction({
+    id: '1',
+    columnState: 'blocked',
+    expectedVersion: 1,
+    blockedReason: { body: 'Waiting for the shared API contract.' },
+  });
+  assert.equal(readFailure.ok, false);
+  await client.query('GRANT SELECT ON pg_temp.comments TO team_planner_app');
+  assert.deepEqual(
+    (
+      await client.query(
+        'SELECT id, state, position, version FROM pg_temp.work_items ORDER BY id',
+      )
+    ).rows,
+    beforeReadFailure.rows,
+  );
+  assert.equal(
+    (await client.query('SELECT count(*)::int AS count FROM pg_temp.comments'))
+      .rows[0].count,
+    0,
+  );
 
   async function snapshot() {
     const items = await client.query(
@@ -135,10 +195,13 @@ try {
   assert.deepEqual(await snapshot(), initial);
 
   const moved = await move('1', 'active');
-  assert.deepEqual(moved, {
-    item: { id: '1', state: 'active', position: 2, version: 2 },
-    changed: true,
-  });
+  assert.deepEqual(
+    { item: moved.item, changed: moved.changed },
+    {
+      item: { id: '1', state: 'active', position: 2, version: 2 },
+      changed: true,
+    },
+  );
   assert.deepEqual(await order('new'), ['5']);
   assert.deepEqual(await order('active'), ['2', '4', '1']);
   assert.equal(
@@ -204,32 +267,32 @@ try {
         authorId: 'missing',
       },
     }),
-    { code: '23503' },
+    { code: '42501' },
   );
   assert.deepEqual(
     await snapshot(),
     beforeBlocked,
-    'Failed comment must roll back state, order and versions',
+    'RLS rejection must roll back state, order and versions',
   );
 
   await move('1', 'blocked', {
     blockedReason: {
       body: '  Waiting for the shared API contract.  ',
-      authorId: 'nora',
+      authorId: null,
     },
   });
   assert.deepEqual(await order('blocked'), ['1']);
   assert.deepEqual((await snapshot()).comments, [
     {
       work_item_id: '1',
-      author_id: 'nora',
+      author_id: null,
       body: 'Waiting for the shared API contract.',
     },
   ]);
   await move('5', 'blocked', {
     blockedReason: {
       body: 'Waiting for an approved design review.',
-      authorId: 'emil',
+      authorId: null,
     },
   });
   await move('5', 'blocked', {
@@ -272,9 +335,15 @@ try {
 
   await reset();
   const beforeAction = await snapshot();
-  await assert.rejects(
-    moveWorkItemAction({ id: '1', columnState: 'invalid', expectedVersion: 1 }),
-    { name: 'ZodError' },
+  assert.equal(
+    (
+      await moveWorkItemAction({
+        id: '1',
+        columnState: 'invalid',
+        expectedVersion: 1,
+      })
+    ).ok,
+    false,
   );
   assert.deepEqual(await snapshot(), beforeAction);
   const actionResult = await moveWorkItemAction({
@@ -286,10 +355,29 @@ try {
       authorId: 'nora',
     },
   });
-  assert.deepEqual(actionResult, {
+  assert.equal(actionResult.ok, true);
+  assert.deepEqual(actionResult.result, {
     item: { id: '1', state: 'blocked', position: 0, version: 2 },
     changed: true,
   });
+  const reloaded = await getBoardData();
+  assert.deepEqual(reloaded, actionResult.board);
+  assert.equal(reloaded.items.find((item) => item.id === '1').state, 'blocked');
+  assert.equal(reloaded.commentsByItemId['1'][0].author.name, 'Guest');
+  assert.equal(
+    reloaded.commentsByItemId['1'][0].body,
+    'Waiting for the shared API contract.',
+  );
+  assert.equal(typeof reloaded.commentsByItemId['1'][0].createdAt, 'string');
+  assert.equal(reloaded.items.find((item) => item.id === '5').version, 2);
+
+  const conflict = await moveWorkItemAction({
+    id: '1',
+    columnState: 'closed',
+    expectedVersion: 1,
+  });
+  assert.equal(conflict.ok, false);
+  assert.deepEqual(conflict.board, reloaded);
   assert.deepEqual((await snapshot()).comments, [
     {
       work_item_id: '1',
@@ -298,10 +386,11 @@ try {
     },
   ]);
   const ordinaryMove = { id: '1', columnState: 'active', expectedVersion: 2 };
-  assert.equal((await moveWorkItemAction(ordinaryMove)).changed, true);
+  assert.equal((await moveWorkItemAction(ordinaryMove)).result.changed, true);
   const beforeNoOp = await snapshot();
   assert.equal(
-    (await moveWorkItemAction({ ...ordinaryMove, expectedVersion: 3 })).changed,
+    (await moveWorkItemAction({ ...ordinaryMove, expectedVersion: 3 })).result
+      .changed,
     false,
   );
   assert.deepEqual(await snapshot(), beforeNoOp);

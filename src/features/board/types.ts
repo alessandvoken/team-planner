@@ -22,6 +22,7 @@ export type WorkItem = {
   description: string;
   priority: 'Low' | 'Medium' | 'High';
   assignee: { id: string; name: string } | null;
+  version: number;
 };
 
 export type WorkItemComment = {
@@ -29,4 +30,9 @@ export type WorkItemComment = {
   author: { id: string; name: string };
   body: string;
   createdAt: string;
+};
+
+export type BoardData = {
+  items: WorkItem[];
+  commentsByItemId: Record<string, WorkItemComment[]>;
 };

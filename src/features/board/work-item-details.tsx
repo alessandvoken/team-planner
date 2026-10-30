@@ -148,7 +148,8 @@ export function WorkItemDetails({
                         className="border border-border bg-surface-secondary"
                       />
                       <Description>
-                        Comments stay in this tab until reload.
+                        Added comments stay in this tab until reload. Blocked
+                        reasons are saved.
                       </Description>
                     </TextField>
                     <Button
